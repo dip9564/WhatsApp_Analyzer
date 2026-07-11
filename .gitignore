@@ -76,6 +76,7 @@ docs/_build/
 target/
 
 # Jupyter Notebook
+*.ipynb
 .ipynb_checkpoints
 
 # IPython
@@ -216,3 +217,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated HTML files
+*.html
+
+# Uploaded chat files
+uploads/
+
+# Temporary files
+temp/
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
