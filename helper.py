@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 from wordcloud import WordCloud
 import emoji
-import pickle
 from pyvis.network import Network
-import text_transform
+
 
 @st.cache_resource
 def total_messages(df,user):
@@ -130,18 +129,10 @@ def date_range_selector(df,user,date_range):
 
     return messages
 
-@st.cache_resource
-def load_pipeline():
-    return pickle.load(open("whatsApp_pipeline.pkl", "rb"))
 
 @st.cache_data
-def sentiment_analysis(df, user, sentiment_count):
+def sentiment_analysis(df, user):
     
-    pipeline = load_pipeline()
-    df["pred"] = pipeline.predict(df["transformed_msg"])
-    df["proba"] = pipeline.predict_proba(df["transformed_msg"])[:, 0]
-
-    # User sentiment table
     user_sentiment = (
         df.groupby("Name")["pred"]
         .value_counts(normalize=True)
@@ -167,17 +158,17 @@ def sentiment_analysis(df, user, sentiment_count):
         user_sentiment["Name"].isin(active_users[active_users >= 20].index)
     ].sort_values("negetivity", ascending=False)
 
-    # Top messages
-    top_negative = temp_df.nlargest(sentiment_count, "proba")[["Name", "msg"]]
-    top_positive = temp_df.nsmallest(sentiment_count, "proba")[["Name", "msg"]]
+    negative_msg = temp_df.nlargest(25, "proba")[["Name", "msg","proba"]]
+    positive_msg = temp_df.nsmallest(25, "proba")[["Name", "msg","proba"]]
+
 
     del temp_df
     return (
-        user_sentiment,
+        user_sentiment[user_sentiment['Name']!="Meta AI"],
         positive,
         negative,
-        top_negative,
-        top_positive,
+        negative_msg,
+        positive_msg,
     )
 
 @st.cache_data

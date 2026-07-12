@@ -2,8 +2,16 @@ import re
 import streamlit as st
 import pandas as pd
 import text_transform
-import helper
+import pickle
 
+@st.cache_data
+def add_sentiment(df):
+    pipeline = pickle.load(open("whatsApp_pipeline.pkl", "rb"))
+    df = df.copy()
+    df["pred"] = pipeline.predict(df["transformed_msg"])
+    df["proba"] = pipeline.predict_proba(df["transformed_msg"])[:, 0]
+
+    return df
 
 @st.cache_data
 def preprocess_text(data):

@@ -21,9 +21,10 @@ background-color: rgba(0, 0, 0, 0);
 </style> """
 st.markdown(page_bg_img,unsafe_allow_html=True)
 
-hm_st,res,snt,Cm,sum=st.tabs(["Home", "ChatScope","Sentiment","Compare Mode","Summarize"])
 
-with hm_st:    
+Home,ChatScope,Sentiment,Compare,Summarize=st.tabs(["Home", "ChatScope","Sentiment","Compare Mode","Summarize"])
+
+with Home:    
     st.title("WhatsApp Chat Analysis 📊")
     uploaded_file = st.sidebar.file_uploader("Choose a WhatsApp Chat(.txt or .zip)", type=["txt", "zip"])
 
@@ -45,9 +46,10 @@ with hm_st:
         - Date range filtering
         - Sentiment analysis
         """)
-        res.warning("""No Response present, Please upload your file first !""")
-        snt.warning("""No Sentiment present, Please upload your file first !""")
-        Cm.warning(""" No data is present for comparing, Please upload your file first !""")
+        ChatScope.warning("""No Response present, Please upload your file first !""")
+        Sentiment.warning("""No Sentiment present, Please upload your file first !""")
+        Compare.warning(""" No data is present for comparing, Please upload your file first !""")
+        Summarize.warning(""" No data is present for summarizing, Please upload your file first !""")
 
     # Process the uploaded file
     if uploaded_file is not None:
@@ -70,6 +72,7 @@ with hm_st:
 
         # Preprocess the chat data
         df = preprocessor.preprocess_text(data)
+        df = preprocessor.add_sentiment(df)
 
         if df.empty:
             st.error("This does not appear to be a valid WhatsApp chat export. Please upload a valid file.")
@@ -81,7 +84,6 @@ with hm_st:
         user = st.sidebar.selectbox("Choose specific person", ["Overall"] + user_list.tolist())
 
         # Initialize session state for analysis visibility
-        
         if "analysis_shown" not in st.session_state:
             st.session_state.analysis_shown = False
 
@@ -91,17 +93,17 @@ with hm_st:
         if st.session_state.analysis_shown:
 
             if user == "Overall":
-                st.header("Overall Statistics")
+                st.header("📊 Overview")
             else:
                 st.header(f"Statistics of : {user}")
 
             total_messages, total_words, total_media_files, total_links = helper.total_messages(df,user)
             col1, col2, col3, col4 = st.columns(4)
 
-            col1.metric("Total messages :",f"{ total_messages}")
-            col2.metric("Total words :",f"{ total_words}")
-            col3.metric("Total media files :",f"{ total_media_files}")
-            col4.metric("Total Links :",f"{ total_links}")
+            col1.metric("💬 Total messages :",f"{ total_messages}")
+            col2.metric("📝 Total words :",f"{ total_words}")
+            col3.metric("🖼️ Total media files :",f"{ total_media_files}")
+            col4.metric("🔗 Total Links :",f"{ total_links}")
 
             MAX_MESSAGES = 100000
             if len(df) > MAX_MESSAGES:
@@ -120,7 +122,7 @@ with hm_st:
 
 
                 user_df=helper.user_persentage(df)
-                st.subheader(f"Message Distribution: {user_df.shape[0]} users")
+                st.subheader(f"👥 Participant Distribution ({user_df.shape[0]} Members)")
                 col1, col2 = st.columns([1.3,2])
 
                 if user_df.shape[0] > 5:
@@ -140,7 +142,7 @@ with hm_st:
 
 
             # monthly timeline
-            st.subheader("Monthly timeline :")
+            st.subheader("📈 Monthly Activity Trend :")
             timeline=helper.monthly_timeline(df,user)
 
             plt.style.use("dark_background")
@@ -153,10 +155,10 @@ with hm_st:
             plt.close(fig)
 
             # daily_activity
-            st.header('Activity Map')
+            st.header(' 📅 Activity Overview')
             col2,col1=st.columns(2)
 
-            col1.subheader("Most active day:")
+            col1.subheader("📆 Messages by Weekday:")
             month_df,daily_df,hour_df= helper.weekly_activity(df,user)
             fig,ax=plt.subplots()
 
@@ -166,7 +168,7 @@ with hm_st:
             plt.close(fig)
 
             # monthly_activity
-            col2.subheader("Most active month:")
+            col2.subheader("🗓️ Messages by Month:")
             fig,ax=plt.subplots()
 
             ax.bar(month_df['month'], month_df['count'],color="#2261e9")
@@ -175,7 +177,7 @@ with hm_st:
             plt.close(fig)
 
             # hourly_activity
-            st.subheader("Most active hour:")
+            st.subheader("⏰ Messages by Daily:")
             fig,ax=plt.subplots(figsize=(16,6))
 
             ax.bar(hour_df['period'], hour_df['count'],color="#2261e9")
@@ -196,45 +198,27 @@ with hm_st:
             st.pyplot(fig)
             plt.close(fig)
 
+            st.header(' 💬 Content Analysis')
             # word_cloud
-            st.subheader("Most use words :")
+            col1, col2 = st.columns([3,1])
+            col1.markdown("#### ☁️ Most Frequent Words :")
             df_wc=helper.word_cloud(df,user)
             fig, ax=plt.subplots()
             ax.imshow(df_wc)
             ax.axis("off")
-            st.pyplot(fig)
+            col1.pyplot(fig)
             plt.close(fig)
 
-            # Date range selector
-            col1, col2 = st.columns([3,1])  
-            min_date = df['Date'].min()
-            max_date = df['Date'].max()
-            st.sidebar.info(f"Chat data available from: \n\n {min_date} to {max_date}")
-
-            col1.subheader("Show messages in Date range:")
-            with col1.form("date_form"):
-                date_range = st.date_input('Choose Date range:',value=(max_date - pd.Timedelta(days=1), max_date),
-                                           min_value=min_date,
-                                           max_value=max_date)
-                show = st.form_submit_button("show messages")
-                if show:
-                    masseges= helper.date_range_selector(df,user,date_range)
-                    if masseges.shape[0] > 7:
-                        st.dataframe(masseges,hide_index=True,height=310)
-                    else:
-                        st.dataframe(masseges,hide_index=True)
-
             # emoji
-            col2.subheader("Emoji analysis:")
+            col2.markdown("##### 😊 Top Emojis:")
             emoji_df=helper.emoji_count(df,user)
 
-            if emoji_df.shape[0] > 9:
-                col2.dataframe(emoji_df,height=350)
-            else:
-                col2.dataframe(emoji_df)
+            col2.dataframe(emoji_df)
+
+
 
 #-------------------------------------------------------------------------------------------------#
-            with res:
+            with ChatScope:
                 st.header("Response Analysis")
                 response_df,avg_restime,median_restime= helper.response_time(df,user)
 
@@ -250,12 +234,12 @@ with hm_st:
                     )
     
                     if response_df.Name.iloc[0] == 'Meta AI':
-                        col2.success(f"Most fast responding person: { response_df.Name.iloc[1] } ")
+                        col2.success(f"⚡ Fastest Responder: { response_df.Name.iloc[1] } ")
                     else:
-                        col2.success(f"Most fast responding person: { response_df.Name.iloc[0] } ")
-                    col2.warning(f"Most late responding person: { response_df.Name.iloc[-1] }")
+                        col2.success(f"⚡ Fastest Responder: { response_df.Name.iloc[0] } ")
+                    col2.warning(f"🐢 Slowest Responder: { response_df.Name.iloc[-1] }")
 
-                    st.subheader(f"Response Time Distribution of {response_df.shape[0]-1} users :")
+                    st.subheader(f"⏱️ Response Time Ranking ({response_df.shape[0]-1} users) :")
                     response_df=response_df.sort_values('Name').reset_index(drop=True).head(25)
                     fig,ax=plt.subplots(figsize=(10,4))
 
@@ -272,13 +256,19 @@ with hm_st:
                         label=f"{user}'s Median Response Time :",
                         value=f"{median_restime:.2f} sec"
                     )
-#-------    ------------------------------------------------------------------------------------------#
+#-------------------------------------------------------------------------------------------------#
                 try:
-                    st.subheader("🌒 Night Messageing : ")
+                    st.subheader("🌒 Night Owl Analysis : ")
                     night_df,night_owl,night_msg=helper.night_conversion(df,user)
 
                     if user == "Overall":
-                        st.success(f"'{night_owl}' is the Night Owl of the group with : {night_msg} Messages")
+                        st.markdown(f"""
+                            ##### Night Owl 🦉 :
+                            **{night_owl}** \n
+                            **{night_msg} Messages sent between 10 PM and 6 AM.**
+                            """)
+
+                        st.markdown("### Messages at Night:")
                         fig,ax=plt.subplots(figsize=(10,4))
 
                         ax.bar(night_df['Name'], night_df['count'],color="#13c2d6")
@@ -290,13 +280,13 @@ with hm_st:
                 except Exception as e:
                     st.error(f"Night Messaging Analysis not available ")
 
-#-------    ------------------------------------------------------------------------------------------#
+#-------------------------------------------------------------------------------------------------#
     
                 net,most_talker = helper.interaction_graph(df,user)
 
                 if user == "Overall":
                     st.markdown(f"""
-                        #### 💬 Best Interactive Partners :
+                        ### 💬 Best Interactive Partners :
                         **{most_talker['source']} ⇔ {most_talker['target']}** \n
                         **{most_talker['count']} Interactions**
                     """)
@@ -307,7 +297,7 @@ with hm_st:
                         **{most_talker['count']}** Interactions
                     """)
 
-                st.subheader("Mention/replay Interaction Graph : ")
+                st.markdown(" #### 🕸️ Interaction Network : ")
 
                 net.save_graph("interaction_graph.html")
                 with open("interaction_graph.html", "r", encoding="utf-8") as f:
@@ -333,10 +323,13 @@ with hm_st:
 #-------------------------------------------------------------------------------------------------#
                 conversation_df = helper.conversation_analysis(df)
                 if user == "Overall":
-                    st.header("Conversation start Analysis : ")
+                    st.subheader(" Conversation Initiators : ")
 
                     name=conversation_df.loc[conversation_df.conversation_started.idxmax(),'Name']
-                    st.success(f"Most conversation starting person : { name }")
+                    st.markdown(f"""
+                        ##### 🗣️ Top Conversation Starter :
+                        **{ name }**
+                    """)
 
                     fig,ax=plt.subplots(figsize=(10,6))
                     user_ls=conversation_df['conversation_started'].head().tolist()
@@ -348,19 +341,21 @@ with hm_st:
                     plt.close(fig)
 #-------------------------------------------------------------------------------------------------#
 
-            with sum:
-                st.header("Summarize Chat")
-                max_date = df['Date'].max()
+            with Summarize:
+                #  Message Explorer
                 min_date = df['Date'].min()
+                max_date = df['Date'].max()
+
+                st.header(" AI Summary")
 
                 with st.form("Date_form"):
                     col1, col2 = st.columns(2)
-                    Date_range = col1.date_input('Choose Date Range up to summary want :',value=(max_date - pd.Timedelta(days=1), max_date),
+                    Date_range = col1.date_input('Select the conversation period to summarize :',value=(max_date - pd.Timedelta(days=1), max_date),
                            min_value=min_date,
                            max_value=max_date)
                     
 
-                    apply = col1.form_submit_button("Generate Summary")
+                    apply = col1.form_submit_button("✨ Generate Summary")
 
                     if apply:
                         try:
@@ -373,43 +368,96 @@ with hm_st:
                         except Exception as e:
                             st.error(f"An unexpected error occurred: {e}")
                     else :
-                        st.info("Selected specific person for his summary")
+                        st.info("Selected specific person for his chat summary")
+
+
+                st.sidebar.info(f"Chat data available from: \n\n {min_date} to {max_date}")
+
+                with st.expander("📂 Message Explorer:"):
+                    with st.form("date_form"):
+                        date_range = st.date_input('Choose Date range:',value=(max_date - pd.Timedelta(days=1), max_date),
+                                                   min_value=min_date,
+                                                   max_value=max_date)
+                        show = st.form_submit_button("show messages")
+                        if show:
+                            masseges= helper.date_range_selector(df,user,date_range)
+                            if masseges.shape[0] > 7:
+                                st.dataframe(masseges,hide_index=True,height=310)
+                            else:
+                                st.dataframe(masseges,hide_index=True)
 #-------------------------------------------------------------------------------------------------#
 
-            with snt:
-                st.header("Sentiment Analysis :")
+            with Sentiment:
+                st.header("Sentiment Insights :")
 
                 if uploaded_file is not None:
                     col1,col2=st.columns(2)
-                    count=st.number_input("Select No. of Most Positive Messages to Display", min_value=1, max_value=30, value=5, step=1)
-                    sentiment_df,positive,negetive,top_negetive, top_positive=helper.sentiment_analysis(df,user,count)
 
-                    user_sentiment=sentiment_df[sentiment_df['Name']!="Meta AI"]
+                    user_sentiment,positive,negetive,negative_msg,positive_msg=helper.sentiment_analysis(df,user)    
+                
 
-
-                    col1.metric("Positivity Rate : ",f"{round(positive,2)}%")
-                    col2.metric("Negativity Rate : ",f"{round(negetive,2)}%")
+                    col1.metric("😊 Positive Messages: ",f"{round(positive,2)}%")
+                    col2.metric("😔 Negative Messages : ",f"{round(negetive,2)}%")
 
                     if user == "Overall":
-                        col2.error(f"{user_sentiment.Name.iloc[0]} is the most Negative participant in the chat.")
-                        col1.success(f"{user_sentiment.Name.iloc[-1]} is the most Positive participant in the chat.")
+                        Negative_user = user_sentiment.Name.iloc[0]
+                        Positive_user = user_sentiment.Name.iloc[-1]
+                        col2.error(f"{Negative_user} is the most Negative participant in the chat.")
+                        col1.success(f"{Positive_user} is the most Positive participant in the chat.")
 
+                        fig, ax = plt.subplots(figsize=(10, 5))
+                        bars = ax.barh(
+                            user_sentiment["Name"],
+                            user_sentiment["prositivity"],
+                            color="#3B82F6",
+                            height=0.65
+                        )
+                        ax.invert_yaxis()
+                        for bar in bars:
+                            width = bar.get_width()
+                            ax.text(
+                                width + 0.5,
+                                bar.get_y() + bar.get_height()/2,
+                                f"{width:.1f}%",
+                                va="center",
+                                fontsize=10,
+                                color="white"
+                            )
+                        ax.set_xlabel("Positive Sentiment (%)", fontsize=12)
+                        ax.set_xlim(0, 100)
+                        ax.grid(axis="x", linestyle="--", alpha=0.3)
+                        ax.set_facecolor("#000000")
+                        fig.patch.set_facecolor("#000000")
+
+                        # Remove unnecessary borders
+                        ax.spines["top"].set_visible(False)
+                        ax.spines["right"].set_visible(False)
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        plt.close(fig)
+
+                    col1, col2 = st.columns([2,1])
+                    with col1.form("sentiment_form"):
+                        sentiment_count = st.number_input("Top Messages to Display:", min_value=1, max_value=25, value=5)
+                        show_sentiment = st.form_submit_button("Show Sentiment Messages")
 
                     col1, col2 = st.columns([1,1])
-
-                    col1.subheader(f"Top {count} Positive Messages")
+                    top_negative = negative_msg.nlargest(sentiment_count, "proba")[["Name", "msg"]]
+                    top_positive = positive_msg.nsmallest(sentiment_count, "proba")[["Name", "msg"]]
+                    col1.subheader(f"Top {sentiment_count} Positive Messages")
                     col1.dataframe(top_positive,hide_index=True)
-                    col2.subheader(f"Top {count} Negative Messages")
-                    col2.dataframe(top_negetive,hide_index=True)
+                    col2.subheader(f"Top {sentiment_count} Negative Messages")
+                    col2.dataframe(top_negative,hide_index=True)
 
 
 #-------------------------------------------------------------------------------------------------#
-            with Cm:
+            with Compare:
                 st.subheader("Compare between Two Member: ")
                 with st.form("compare_form"):
-                    col1,col2=st.columns(2)
+                    col1,col2,col3=st.columns([2,1,2])
+                    col2.markdown("## ⚔️VS⚔️ ")
                     person1 =col1.selectbox("Select first person :",user_list)
-                    person2 = col2.selectbox("Select second person :",user_list)
+                    person2 = col3.selectbox("Select second person :",user_list)
 
                     compare = st.form_submit_button("show compare")
 
@@ -419,15 +467,15 @@ with hm_st:
                     total_messages1, total_words1, total_media_files1, total_links1 = helper.total_messages(df,person1)
                     total_messages2, total_words2, total_media_files2, total_links2 = helper.total_messages(df,person2)
 
-                    col1.metric("Total messages:",total_messages1)
-                    col2.metric("Total words:",total_words1)
-                    col1.metric("Total media files:",total_media_files1)
-                    col2.metric("Total Links:",total_links1)
+                    col1.metric("💬 messages:",total_messages1)
+                    col2.metric("📝 words:",total_words1)
+                    col1.metric("📷 media files:",total_media_files1)
+                    col2.metric("🔗 Links:",total_links1)
 
-                    col3.metric("Total messages:",total_messages2)
-                    col4.metric("Total words:",total_words2)
-                    col3.metric("Total media files:",total_media_files2)
-                    col4.metric("Total Links:",total_links2)
+                    col3.metric("💬 messages:",total_messages2)
+                    col4.metric("📝 words:",total_words2)
+                    col3.metric("📷 media files:",total_media_files2)
+                    col4.metric("🔗 Links:",total_links2)
 
                     ## responce time
                     st.subheader("⏱️ Responce Time Analysis :")
@@ -463,8 +511,8 @@ with hm_st:
                         _,night_owl1,night_msg1=helper.night_conversion(df,person1)
                         _,night_owl2,night_msg2=helper.night_conversion(df,person2)
 
-                        col1.metric("Total message in Night: ",night_msg1)
-                        col2.metric("Total message in Night: ",night_msg2)
+                        col1.metric("Night Messages: ",night_msg1)
+                        col2.metric(" Night Messages: ",night_msg2)
                     except Exception as e:
                         st.error(f" Night Messaging not available for {person1} or {person2} ")
 
@@ -473,11 +521,11 @@ with hm_st:
                     col1, col2, col3, col4 = st.columns(4)
                     try :
 
-                        positive1=sentiment_df.loc[sentiment_df['Name'] == person1,'prositivity'].iloc[0]
-                        negetive1=sentiment_df.loc[sentiment_df['Name']== person1,'negetivity'].iloc[0]
+                        positive1=user_sentiment.loc[user_sentiment['Name'] == person1,'prositivity'].iloc[0]
+                        negetive1=user_sentiment.loc[user_sentiment['Name']== person1,'negetivity'].iloc[0]
 
-                        positive2=sentiment_df.loc[sentiment_df['Name'] == person2,'prositivity'].iloc[0]
-                        negetive2=sentiment_df.loc[sentiment_df['Name']== person2,'negetivity'].iloc[0]
+                        positive2=user_sentiment.loc[user_sentiment['Name'] == person2,'prositivity'].iloc[0]
+                        negetive2=user_sentiment.loc[user_sentiment['Name']== person2,'negetivity'].iloc[0]
 
                         col1.metric("Positivity Rate : ",f"{round(positive1,2)}%")
                         col1.metric("Negativity Rate : ",f"{round(negetive1,2)}%")
@@ -485,7 +533,7 @@ with hm_st:
                         col3.metric("Positivity Rate : ",f"{round(positive2,2)}%")
                         col3.metric("Negativity Rate : ",f"{round(negetive2,2)}%")
                     except:
-                        col1.warning("There sentiment not available")
+                        col1.warning("Insufficient messages for sentiment analysis.")
 
                     emoji_df1=helper.emoji_count(df,person1)
                     emoji_df2=helper.emoji_count(df,person2)
@@ -502,11 +550,21 @@ with hm_st:
                         user_ls=[conversation_time1,conversation_time2]
 
                         name=[person1,person2]
-                        if conversation_time1 > conversation_time2:
-                            col1.success(f"Conversation starting person : { person1 }")
-                        else:
-                            col1.success(f"Conversation starting person : { person2 }")
+                        conversation_per1= conversation_time1 *100 // (conversation_time1+conversation_time2)
 
+                        if conversation_time1 > conversation_time2:
+                            col1.markdown(f"""
+                                ### 💬 Conversation Starter :
+                                **{ person1 }** \n
+                                **Started {round(conversation_per1,2)}% of conversations**
+                            """)
+                        else:
+                            col1.markdown(f"""
+                                ### 💬 Conversation Starter :
+                                **{ person2 }** \n
+                                **Started {round(100-conversation_per1,2)}% of conversations**
+                            """)
+                            
                         fig,ax=plt.subplots(figsize=(4,4))
                         ax.pie(user_ls, labels=name, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
                         ax.axis('equal')
