@@ -236,7 +236,7 @@ with hm_st:
 #-------------------------------------------------------------------------------------------------#
             with res:
                 st.header("Response Analysis")
-                response_df, avg_restime,median_restime= helper.response_time(df,user)
+                response_df,avg_restime,median_restime= helper.response_time(df,user)
 
                 col1, col2 = st.columns([1.5,2])
                 if user == "Overall":
@@ -355,9 +355,10 @@ with hm_st:
 
                 with st.form("Date_form"):
                     col1, col2 = st.columns(2)
-                    Date_range = col1.date_input('Choose Date Range ',value=(max_date - pd.Timedelta(days=1), max_date),
+                    Date_range = col1.date_input('Choose Date Range up to summary want :',value=(max_date - pd.Timedelta(days=1), max_date),
                            min_value=min_date,
                            max_value=max_date)
+                    
 
                     apply = col1.form_submit_button("Generate Summary")
 
@@ -371,6 +372,8 @@ with hm_st:
                             st.error(f"Gemini quota exceeded. Please try again later.")
                         except Exception as e:
                             st.error(f"An unexpected error occurred: {e}")
+                    else :
+                        st.info("Selected specific person for his summary")
 #-------------------------------------------------------------------------------------------------#
 
             with snt:
