@@ -9,44 +9,33 @@ An AI-powered WhatsApp Chat Analyzer built with **Python**, **Streamlit**, **Sci
 ## ✨ Features
 
 ### 📊 Chat Analytics
-- Total Messages
-- Total Words
-- Media Shared
-- Links Shared
-- Message Distribution
+- Total Messages, Words, Media Shared, Links Shared
 
 ### 📈 Activity Analysis
 - Monthly Timeline
 - Daily Activity
 - Weekly Activity
 - Weekly Heatmap
-- Date Range Filtering
 
 ### ☁️ Content Analysis
-- Word Cloud
-- Most Frequent Words
+- Word Cloud of Most Frequent Words
 - Emoji Analysis
 
 ### 🤝 Conversation Insights
 - Response Time Analysis
-- Fastest & Slowest Responders
 - Night Owl Analysis
 - Conversation Starters
-- Top Interaction Partners
 - Interactive Conversation Network
 
 ### 😊 Sentiment Analysis
-- Positive & Negative Sentiment
-- Participant-wise Sentiment
-- Most Positive Messages
-- Most Negative Messages
+- Positive & Negative Sentiment (Participant-wise)
+- Most Positive & Negative Messages
 
 ### ⚖️ Member Comparison
 Compare any two participants based on:
 - Messages
 - Words
 - Response Time
-- Night Activity
 - Sentiment
 - Monthly Activity
 - Conversation Behaviour
@@ -85,7 +74,6 @@ Compare any two participants based on:
 
 ---
 
-
 ## 🚀 Installation
 
 Clone the repository:
@@ -113,7 +101,6 @@ streamlit run app.py
 ```
 
 ---
-
 
 ## 👨‍💻 Author
 
