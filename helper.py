@@ -160,11 +160,11 @@ def sentiment_analysis(df, user):
 
     negative_msg = temp_df.nlargest(25, "proba")[["Name", "msg","proba"]]
     positive_msg = temp_df.nsmallest(25, "proba")[["Name", "msg","proba"]]
-
+    user_sentiment=user_sentiment[user_sentiment['Name']!="Meta AI"]
 
     del temp_df
     return (
-        user_sentiment[user_sentiment['Name']!="Meta AI"],
+        user_sentiment.sample(30),
         positive,
         negative,
         negative_msg,
