@@ -3,7 +3,8 @@ import streamlit as st
 import pandas as pd
 import text_transform
 import helper
-    
+
+
 @st.cache_data
 def preprocess_text(data):
 
@@ -22,16 +23,13 @@ def preprocess_text(data):
     df['Date'] = df['msg_date'].dt.date
     df['year']=df['msg_date'].dt.year
     df['month']=df['msg_date'].dt.strftime("%b")
-    df['day']=df['msg_date'].dt.day
     df['day_name']=df.msg_date.dt.strftime("%a")
     df['hour']=df['msg_date'].dt.hour
-    df['minute']=df['msg_date'].dt.minute
-    df['Time']=df['msg_date'].dt.strftime("%H:%M")
+    # df['day']=df['msg_date'].dt.day
+    # df['minute']=df['msg_date'].dt.minute
+    # df['Time']=df['msg_date'].dt.strftime("%H:%M")
     df['period']=df['hour'].apply(lambda x: f"{x}-{(x+1)%24}")
 
-    # transform the text for sentiment analysis
-    df['transformed_msg'] = df['msg'].apply(text_transform.transformed)
-
-    df['Sentiment']=helper.Sentiment_col(df)
+    df["transformed_msg"] = df["msg"].apply(text_transform.transformed)
 
     return df

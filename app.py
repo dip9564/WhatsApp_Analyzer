@@ -103,6 +103,9 @@ with hm_st:
             col3.metric("Total media files :",f"{ total_media_files}")
             col4.metric("Total Links :",f"{ total_links}")
 
+            MAX_MESSAGES = 100000
+            if len(df) > MAX_MESSAGES:
+                df = df.tail(MAX_MESSAGES)
 
             # group analysis
             col1, col2 = st.columns(2)
@@ -133,6 +136,7 @@ with hm_st:
                 ax.pie(user_ls, labels=label, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
                 ax.axis('equal')
                 col2.pyplot(fig)
+                plt.close(fig)
 
 
             # monthly timeline
@@ -146,7 +150,7 @@ with hm_st:
             plt.xticks(rotation='vertical')
             plt.ylabel("No. of massages")
             st.pyplot(fig)
-
+            plt.close(fig)
 
             # daily_activity
             st.header('Activity Map')
@@ -159,6 +163,7 @@ with hm_st:
             ax.bar(daily_df['day_name'], daily_df['count'],color="#2261e9")
             plt.ylabel("No. of massages")
             col1.pyplot(fig)
+            plt.close(fig)
 
             # monthly_activity
             col2.subheader("Most active month:")
@@ -167,6 +172,7 @@ with hm_st:
             ax.bar(month_df['month'], month_df['count'],color="#2261e9")
             plt.ylabel("No. of massages")
             col2.pyplot(fig)
+            plt.close(fig)
 
             # hourly_activity
             st.subheader("Most active hour:")
@@ -176,6 +182,7 @@ with hm_st:
             plt.xticks(rotation='vertical')
             plt.ylabel("No. of massages")
             st.pyplot(fig)
+            plt.close(fig)
 
             # Activity Heatmap
             st.subheader("Weekly Activity Heatmap:")
@@ -187,6 +194,7 @@ with hm_st:
             ax.set_ylabel("")
             ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
             st.pyplot(fig)
+            plt.close(fig)
 
             # word_cloud
             st.subheader("Most use words :")
@@ -195,7 +203,7 @@ with hm_st:
             ax.imshow(df_wc)
             ax.axis("off")
             st.pyplot(fig)
-
+            plt.close(fig)
 
             # Date range selector
             col1, col2 = st.columns([3,1])  
@@ -228,7 +236,7 @@ with hm_st:
 #-------------------------------------------------------------------------------------------------#
             with res:
                 st.header("Response Analysis")
-                response_df, avg_restime,median_df ,median_restime= helper.response_time(df,user)
+                response_df, avg_restime,median_restime= helper.response_time(df,user)
 
                 col1, col2 = st.columns([1.5,2])
                 if user == "Overall":
@@ -254,6 +262,7 @@ with hm_st:
                     ax.bar(response_df['Name'], response_df['Response_time'],color="#13c2d6")
                     plt.xticks(rotation='vertical')
                     st.pyplot(fig)
+                    plt.close(fig)
                 else:
                     col1.metric(
                         label=f"{user} 's Average Response Time :",
@@ -275,6 +284,7 @@ with hm_st:
                         ax.bar(night_df['Name'], night_df['count'],color="#13c2d6")
                         plt.xticks(rotation='vertical')
                         st.pyplot(fig)
+                        plt.close(fig)
                     else:
                         st.metric("Total message in Night: ",night_msg)
                 except Exception as e:
@@ -282,9 +292,7 @@ with hm_st:
 
 #-------    ------------------------------------------------------------------------------------------#
     
-                net,interaction_df = helper.interaction_graph(df,user)
-
-                most_talker=interaction_df.loc[interaction_df['count'].idxmax()]
+                net,most_talker = helper.interaction_graph(df,user)
 
                 if user == "Overall":
                     st.markdown(f"""
@@ -337,30 +345,54 @@ with hm_st:
                     ax.pie(user_ls, labels=label, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
                     ax.axis('equal')
                     st.pyplot(fig)
+                    plt.close(fig)
+#-------------------------------------------------------------------------------------------------#
+
+            with sum:
+                st.header("Summarize Chat")
+                max_date = df['Date'].max()
+                min_date = df['Date'].min()
+
+                with st.form("Date_form"):
+                    col1, col2 = st.columns(2)
+                    Date_range = col1.date_input('Choose Date Range ',value=(max_date - pd.Timedelta(days=1), max_date),
+                           min_value=min_date,
+                           max_value=max_date)
+
+                    apply = col1.form_submit_button("Generate Summary")
+
+                    if apply:
+                        try:
+                            with st.spinner("Generating summary..."):   
+                                summary = gemini.summarize_chat(df, user, Date_range)
+                                st.subheader("Summary of the WhatsApp Conversation:")
+                                st.write(summary)
+                        except ClientError as e:
+                            st.error(f"Gemini quota exceeded. Please try again later.")
+                        except Exception as e:
+                            st.error(f"An unexpected error occurred: {e}")
 #-------------------------------------------------------------------------------------------------#
 
             with snt:
                 st.header("Sentiment Analysis :")
 
                 if uploaded_file is not None:
-                    sentiment_df,positive,negetive=helper.Sentiment(df,user)
+                    col1,col2=st.columns(2)
+                    count=st.number_input("Select No. of Most Positive Messages to Display", min_value=1, max_value=30, value=5, step=1)
+                    sentiment_df,positive,negetive,top_negetive, top_positive=helper.sentiment_analysis(df,user,count)
+
                     user_sentiment=sentiment_df[sentiment_df['Name']!="Meta AI"]
 
-                    col1,col2=st.columns(2)
 
                     col1.metric("Positivity Rate : ",f"{round(positive,2)}%")
                     col2.metric("Negativity Rate : ",f"{round(negetive,2)}%")
 
-                    col1,col2=st.columns(2)
                     if user == "Overall":
                         col2.error(f"{user_sentiment.Name.iloc[0]} is the most Negative participant in the chat.")
                         col1.success(f"{user_sentiment.Name.iloc[-1]} is the most Positive participant in the chat.")
 
 
-                    count=st.number_input("Select No. of Most Positive Messages to Display", min_value=1, max_value=30, value=5, step=1)
-
                     col1, col2 = st.columns([1,1])
-                    top_negetive, top_positive = helper.Sentiment_msg(df,user,count)
 
                     col1.subheader(f"Top {count} Positive Messages")
                     col1.dataframe(top_positive,hide_index=True)
@@ -397,8 +429,8 @@ with hm_st:
                     ## responce time
                     st.subheader("⏱️ Responce Time Analysis :")
                     col1, col2, col3, col4 = st.columns(4)
-                    _, avg_restime1,_,med_restime1= helper.response_time(df,person1)
-                    _, avg_restime2,_,med_restime2= helper.response_time(df,person2)
+                    _, avg_restime1,med_restime1= helper.response_time(df,person1)
+                    _, avg_restime2,med_restime2= helper.response_time(df,person2)
 
                     col1.metric("Average Response Time: ", f"{avg_restime1:.2f} sec")
                     col2.metric("Median Response Time: ", f"{med_restime1:.2f} sec")
@@ -408,11 +440,8 @@ with hm_st:
 
                     # interaction
                     col1,col2=st.columns(2)
-                    _,interaction_df1 = helper.interaction_graph(df,person1)
-                    _,interaction_df2 = helper.interaction_graph(df,person2)
-
-                    most_talker1=interaction_df1.loc[interaction_df1['count'].idxmax()]
-                    most_talker2=interaction_df2.loc[interaction_df2['count'].idxmax()]
+                    _,most_talker1 = helper.interaction_graph(df,person1)
+                    _,most_talker2 = helper.interaction_graph(df,person2)
 
                     col1.markdown(f"""
                         #### 💬 Talk Most with :
@@ -499,6 +528,7 @@ with hm_st:
                     plt.ylabel("No. of massages")
                     plt.legend()
                     st.pyplot(fig)
+                    plt.close(fig)
 
 
                     st.subheader("Weekly activity compare :")
@@ -514,6 +544,7 @@ with hm_st:
                     plt.ylabel("No. of massages")
                     plt.legend()
                     st.pyplot(fig)
+                    plt.close(fig)
 
 
                     st.subheader("Daily activity compare :")
@@ -529,30 +560,8 @@ with hm_st:
                     plt.ylabel("No. of massages")
                     plt.legend()
                     st.pyplot(fig)
+                    plt.close(fig)
 
-            with sum:
-                st.header("Summarize Chat")
-                max_date = df['Date'].max()
-                min_date = df['Date'].min()
-
-                with st.form("Date_form"):
-                    col1, col2 = st.columns(2)
-                    Date_range = col1.date_input('Choose Date Range ',value=(max_date - pd.Timedelta(days=1), max_date),
-                           min_value=min_date,
-                           max_value=max_date)
-
-                    apply = col1.form_submit_button("Generate Summary")
-
-                    if apply:
-                        try:
-                            with st.spinner("Generating summary..."):   
-                                summary = gemini.summarize_chat(df, user, Date_range)
-                                st.subheader("Summary of the WhatsApp Conversation:")
-                                st.write(summary)
-                        except ClientError as e:
-                            st.error(f"Gemini quota exceeded. Please try again later.")
-                        except Exception as e:
-                            st.error(f"An unexpected error occurred: {e}")
 
 
 

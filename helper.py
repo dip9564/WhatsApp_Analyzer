@@ -4,6 +4,7 @@ from wordcloud import WordCloud
 import emoji
 import pickle
 from pyvis.network import Network
+import text_transform
 
 @st.cache_resource
 def total_messages(df,user):
@@ -130,57 +131,54 @@ def date_range_selector(df,user,date_range):
     return messages
 
 @st.cache_resource
-def Sentiment_col(df):
-    pipeline = pickle.load(open("whatsApp_pipeline.pkl", "rb"))
-    proba = pipeline.predict(df.transformed_msg)
+def load_pipeline():
+    return pickle.load(open("whatsApp_pipeline.pkl", "rb"))
 
-    return proba
+@st.cache_data
+def sentiment_analysis(df, user, sentiment_count):
+    
+    pipeline = load_pipeline()
+    df["pred"] = pipeline.predict(df["transformed_msg"])
+    df["proba"] = pipeline.predict_proba(df["transformed_msg"])[:, 0]
 
-@st.cache_resource
-def Sentiment(df,user):
-
-    pipeline = pickle.load(open("whatsApp_pipeline.pkl", "rb"))
-    pred = pipeline.predict(df.transformed_msg)
-    df['pred'] = pred
-    user_sentiment = (df.groupby('Name')['pred']
-      .value_counts(normalize=True)
-      .mul(100)
-      .unstack(fill_value=0)
-      .reset_index()
+    # User sentiment table
+    user_sentiment = (
+        df.groupby("Name")["pred"]
+        .value_counts(normalize=True)
+        .mul(100)
+        .unstack(fill_value=0)
+        .rename(columns={0: "negetivity", 1: "prositivity"})
+        .reset_index()
     )
-    user_sentiment.columns=['Name','negetivity','prositivity']
 
+    # Overall or selected user
     if user == "Overall":
-        positive=user_sentiment['prositivity'].mean()
-        negetive=user_sentiment['negetivity'].mean()
+        positive = user_sentiment["prositivity"].mean()
+        negative = user_sentiment["negetivity"].mean()
+        temp_df = df
     else:
-        positive=user_sentiment.loc[user_sentiment['Name'] == user,'prositivity'].iloc[0]
-        negetive=user_sentiment.loc[user_sentiment['Name']== user,'negetivity'].iloc[0]
+        positive = user_sentiment.loc[user_sentiment["Name"] == user, "prositivity"].iloc[0]
+        negative = user_sentiment.loc[user_sentiment["Name"] == user, "negetivity"].iloc[0]
+        temp_df = df[df["Name"] == user]
 
-    msg_count = df.groupby('Name').size()
-    active_users = msg_count[msg_count >= 20].index
-    user_sentiment = user_sentiment[user_sentiment['Name'].isin(active_users)]
-    user_sentiment.sort_values(by='negetivity',ascending=False,inplace=True)
+    # Active users only
+    active_users = df["Name"].value_counts()
+    user_sentiment = user_sentiment[
+        user_sentiment["Name"].isin(active_users[active_users >= 20].index)
+    ].sort_values("negetivity", ascending=False)
 
-    return user_sentiment,positive,negetive
+    # Top messages
+    top_negative = temp_df.nlargest(sentiment_count, "proba")[["Name", "msg"]]
+    top_positive = temp_df.nsmallest(sentiment_count, "proba")[["Name", "msg"]]
 
-@st.cache_resource
-def Sentiment_msg(df,user,sentiment_count):
-    if user != "Overall":
-        df=df[df['Name']==user]
-    pipeline = pickle.load(open("whatsApp_pipeline.pkl", "rb"))
-    proba = pipeline.predict_proba(df.transformed_msg)
-
-    df['proba']=proba[ :, 0]
-
-
-    top_negetive = df.nlargest(sentiment_count,'proba')[['Name','msg']]
-    top_negetive.columns = ['Name', 'Message']
-
-    top_positive = df.nsmallest(sentiment_count,'proba')[['Name','msg']]
-    top_positive.columns = ['Name', 'Message']
-
-    return top_negetive, top_positive
+    del temp_df
+    return (
+        user_sentiment,
+        positive,
+        negative,
+        top_negative,
+        top_positive,
+    )
 
 @st.cache_data
 def response_time(df,user):
@@ -208,8 +206,10 @@ def response_time(df,user):
         median_time= median_df[median_df["Name"] == user]["Response_time"].values[0]
 
     smallest_df = responses_time.nsmallest(25, "Response_time")
-
-    return smallest_df, avg_restime, median_df, median_time
+    del responses_time
+    del responses_df
+    del median_df
+    return smallest_df, avg_restime, median_time
 
 @st.cache_data
 def conversation_analysis(df):
@@ -266,6 +266,7 @@ def interaction_analysis(df,user):
         filt= interaction_df['count'] > interaction_df['count'].mean()/10
         interaction_df = interaction_df[filt]
 
+    del reply_df
     return interaction_df
 
 @st.cache_data
@@ -327,8 +328,10 @@ def interaction_graph(df,user):
                 arrows="to",
                 color={"color": "#2636E4","highlight": "#5C33FF",}
             )
-
-    return net,interaction_df
+    most_talker=interaction_df.loc[interaction_df['count'].idxmax()]
+    del interaction_df
+    del msg_count
+    return net,most_talker
 
 
 def night_conversion(df,user):
