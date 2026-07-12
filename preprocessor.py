@@ -27,7 +27,7 @@ def preprocess_text(data):
     df['hour']=df['msg_date'].dt.hour
     # df['day']=df['msg_date'].dt.day
     # df['minute']=df['msg_date'].dt.minute
-    # df['Time']=df['msg_date'].dt.strftime("%H:%M")
+    df['Time']=df['msg_date'].dt.strftime("%H:%M")
     df['period']=df['hour'].apply(lambda x: f"{x}-{(x+1)%24}")
 
     df["transformed_msg"] = df["msg"].apply(text_transform.transformed)
