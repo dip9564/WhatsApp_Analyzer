@@ -25,27 +25,35 @@ st.markdown(page_bg_img,unsafe_allow_html=True)
 Home,ChatScope,Sentiment,Compare,Summarize=st.tabs(["Home", "ChatScope","Sentiment","Compare Mode","Summarize"])
 
 with Home:    
-    st.title("WhatsApp Chat Analysis 📊")
+    st.title("WhatsApp Chat Analyzer 📊")
     uploaded_file = st.sidebar.file_uploader("Choose a WhatsApp Chat(.txt or .zip)", type=["txt", "zip"])
 
     if uploaded_file is None:
-        st.header("How to Use :")
+        st.markdown(" \n\n Analyze WhatsApp chats with interactive visualizations, AI-powered summaries, sentiment analysis, and conversation insights.")
+        st.subheader("How to Use :")
 
-        st.markdown("""
-        1. Export a WhatsApp chat from your WhatsApp export chat option.
+        st.markdown(""" 
+        1. Export a WhatsApp chat from your WhatsApp Export Chat(Without Media recommended).
         2. Upload the TXT or ZIP file( in top right corner ).
-        3. Select a user.\n\n
-            • Overall analysis for all users.\n\n
-            • Individual analysis for a specific user.
+        3. Choose a participant or select Overall.
         4. Click 'Show Analysis'
 
-        ### Features
-        - Message statistics
-        - Emoji analysis
-        - Activity heatmap
-        - Date range filtering
-        - Sentiment analysis
+        ### ✨ Features
+
+        - 📊 Message Statistics
+        - 📈 Activity Timeline
+        - 🔥 Weekly Heatmap
+        - ☁️ Word Cloud
+        - 😊 Emoji Analysis
+        - 🧠 Sentiment Analysis
+        - 🤝 Interaction Network
+        - ⚖️ Member Comparison
+        - 🤖 AI Chat Summary
+        - 📂 Message Explorer
         """)
+        left, center, right = st.columns([1, 2.5, 1])
+        center.markdown("Built with Python • Streamlit • Scikit-learn • Gemini AI")
+
         ChatScope.warning("""No Response present, Please upload your file first !""")
         Sentiment.warning("""No Sentiment present, Please upload your file first !""")
         Compare.warning(""" No data is present for comparing, Please upload your file first !""")
@@ -307,17 +315,19 @@ with Home:
                         "<body>","<body style='background-color: transparent;'>"
                         """ <script>
                             network.once("stabilizationIterationsDone", function () {
+                                network.stopSimulation();
                                 network.fit({
                                     animation: {
-                                        duration: 400
+                                        duration: 500,
+                                        easingFunction: "easeInOutQuad"
                                     }
                                 });
                             });
-                           </script>
+                            </script>
                         </body>"""
                     )
 
-                components.html(html, height=410)
+                components.html(html, height=410,width=None,)
 
 
 #-------------------------------------------------------------------------------------------------#
@@ -402,8 +412,12 @@ with Home:
                     if user == "Overall":
                         Negative_user = user_sentiment.Name.iloc[0]
                         Positive_user = user_sentiment.Name.iloc[-1]
-                        col2.error(f"{Negative_user} is the most Negative participant in the chat.")
-                        col1.success(f"{Positive_user} is the most Positive participant in the chat.")
+
+                        col1.markdown(""" ### Most Positive participant :""")
+                        col1.success(f"{Positive_user}")
+
+                        col2.markdown(""" ### Most Negative participant :""")
+                        col2.error(f"{Negative_user}")
 
                         fig, ax = plt.subplots(figsize=(10, 5))
                         bars = ax.barh(
@@ -552,18 +566,13 @@ with Home:
                         name=[person1,person2]
                         conversation_per1= conversation_time1 *100 // (conversation_time1+conversation_time2)
 
+                        col1.markdown(f""" ### 💬 Conversation Starter :""")
                         if conversation_time1 > conversation_time2:
-                            col1.markdown(f"""
-                                ### 💬 Conversation Starter :
-                                **{ person1 }** \n
-                                **Started {round(conversation_per1,2)}% of conversations**
-                            """)
+                            col1.success(f"""**{ person1 }**""")
+                            col1.markdown(f"""**Started {round(conversation_per1,2)}% of conversations**""")
                         else:
-                            col1.markdown(f"""
-                                ### 💬 Conversation Starter :
-                                **{ person2 }** \n
-                                **Started {round(100-conversation_per1,2)}% of conversations**
-                            """)
+                            col1.success(f"""**{ person2 }**""")
+                            col1.markdown(f"""**Started {round(100 - conversation_per1,2)}% of conversations**""")
                             
                         fig,ax=plt.subplots(figsize=(4,4))
                         ax.pie(user_ls, labels=name, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
