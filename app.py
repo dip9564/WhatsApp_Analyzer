@@ -80,11 +80,6 @@ with Home:
 
         # Preprocess the chat data
         df = preprocessor.preprocess_text(data)
-        total_messages, total_words, total_media_files, total_links = helper.total_messages(df,user)
-        MAX_MESSAGES = 100000
-        if len(df) > MAX_MESSAGES:
-            df = df.tail(MAX_MESSAGES)
-        df = preprocessor.add_sentiment(df)
 
         if df.empty:
             st.error("This does not appear to be a valid WhatsApp chat export. Please upload a valid file.")
@@ -95,6 +90,11 @@ with Home:
 
         user = st.sidebar.selectbox("Choose specific person", ["Overall"] + user_list.tolist())
 
+        total_messages, total_words, total_media_files, total_links = helper.total_messages(df,user)
+        MAX_MESSAGES = 100000
+        if len(df) > MAX_MESSAGES:
+            df = df.tail(MAX_MESSAGES)
+        df = preprocessor.add_sentiment(df)
         # Initialize session state for analysis visibility
         if "analysis_shown" not in st.session_state:
             st.session_state.analysis_shown = False
