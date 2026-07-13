@@ -22,11 +22,15 @@ def preprocess_text(data):
     pattern=r'\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2}\s(?:am|pm)\s-\s.*?:\s(.*)'
     msg=re.findall(pattern, data)
 
-    pattern=r'(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2}\s(?:am|pm))\s-\s.*?:\s'
-    date=re.findall(pattern, data)
+    pattern = r'(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2}\s*[ap]m)\s-\s.*?:\s'
+    date = re.findall(pattern, data, flags=re.IGNORECASE)
 
     df=pd.DataFrame({'msg_date':date, 'Name':name, 'msg':msg})
-    df['msg_date']=pd.to_datetime(df['msg_date'], format='%d/%m/%Y, %I:%M %p')
+    df["msg_date"] = pd.to_datetime(
+    df["msg_date"],
+    format="mixed",
+    dayfirst=True
+    )
 
     df['Date'] = df['msg_date'].dt.date
     df['year']=df['msg_date'].dt.year
