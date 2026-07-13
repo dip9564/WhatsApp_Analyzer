@@ -80,6 +80,9 @@ with Home:
 
         # Preprocess the chat data
         df = preprocessor.preprocess_text(data)
+        MAX_MESSAGES = 100000
+        if len(df) > MAX_MESSAGES:
+            df = df.tail(MAX_MESSAGES)
         df = preprocessor.add_sentiment(df)
 
         if df.empty:
@@ -113,9 +116,6 @@ with Home:
             col3.metric("🖼️ Total media files :",f"{ total_media_files}")
             col4.metric("🔗 Total Links :",f"{ total_links}")
 
-            MAX_MESSAGES = 100000
-            if len(df) > MAX_MESSAGES:
-                df = df.tail(MAX_MESSAGES)
 
             # group analysis
             col1, col2 = st.columns(2)
