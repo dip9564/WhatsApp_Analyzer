@@ -80,6 +80,7 @@ with Home:
 
         # Preprocess the chat data
         df = preprocessor.preprocess_text(data)
+        total_messages, total_words, total_media_files, total_links = helper.total_messages(df,user)
         MAX_MESSAGES = 100000
         if len(df) > MAX_MESSAGES:
             df = df.tail(MAX_MESSAGES)
@@ -108,7 +109,6 @@ with Home:
             else:
                 st.header(f"Statistics of : {user}")
 
-            total_messages, total_words, total_media_files, total_links = helper.total_messages(df,user)
             col1, col2, col3, col4 = st.columns(4)
 
             col1.metric("💬 Total messages :",f"{ total_messages}")
