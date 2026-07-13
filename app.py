@@ -34,7 +34,7 @@ with Home:
 
         st.markdown(""" 
         1. Export a WhatsApp chat from your WhatsApp Export Chat(Without Media recommended).
-        2. Upload the TXT or ZIP file( in top right corner ).
+        2. Upload the TXT or ZIP file using the file uploader on the left sidebar.
         3. Choose a participant or select Overall.
         4. Click 'Show Analysis'
 
