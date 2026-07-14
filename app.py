@@ -1,4 +1,4 @@
-import zipfile
+import zipfile, time
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -373,6 +373,14 @@ with Home:
                                 summary = gemini.summarize_chat(df, user, Date_range)
                                 st.subheader("Summary of the WhatsApp Conversation:")
                                 st.write(summary)
+                                placeholder = st.empty()
+                                text = ""
+                                for word in summary.split():
+                                
+                                    text += word + " "
+                                    placeholder.markdown(text)
+                                    time.sleep(0.03)
+
                         except ClientError as e:
                             st.error(f"Gemini quota exceeded. Please try again later.")
                         except Exception as e:
