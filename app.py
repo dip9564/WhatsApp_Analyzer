@@ -378,7 +378,7 @@ with Home:
                                 for word in summary.split():
                                     text += word + " "
 
-                                    placeholder.markdown(text)
+                                    st.write(text)
                                     time.sleep(0.03)
 
                         except ClientError as e:
