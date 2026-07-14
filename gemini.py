@@ -1,8 +1,9 @@
 from google import genai
 import streamlit as st
 
-api_key = st.secrets["GEMINI_API_KEY"]
-client = genai.Client(api_key=api_key)
+# api_key = st.secrets["GEMINI_API_KEY"]
+client = genai.Client(api_key="AIzaSyC_3m1j-gNBZw6MYRpRrHY7fejcCfJTgNE"
+)
 
 def summarize(chat_text):
     prompt = f"""

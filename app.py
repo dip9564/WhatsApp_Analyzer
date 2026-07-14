@@ -372,14 +372,7 @@ with Home:
                             with st.spinner("Generating summary..."):   
                                 summary = gemini.summarize_chat(df, user, Date_range)
                                 st.subheader("Summary of the WhatsApp Conversation:")
-
-                                placeholder = st.empty()
-                                text = ""
-                                for word in summary.split():
-                                    text += word + " "
-
-                                    st.write(text)
-                                    time.sleep(0.03)
+                                st.write(summary)
 
                         except ClientError as e:
                             st.error(f"Gemini quota exceeded. Please try again later.")
