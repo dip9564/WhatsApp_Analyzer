@@ -372,13 +372,13 @@ with Home:
                             with st.spinner("Generating summary..."):   
                                 summary = gemini.summarize_chat(df, user, Date_range)
                                 st.subheader("Summary of the WhatsApp Conversation:")
-                                st.write(summary)
+
                                 placeholder = st.empty()
                                 text = ""
                                 for word in summary.split():
-                                
                                     text += word + " "
-                                    placeholder.markdown(text)
+
+                                    placeholder.write(text)
                                     time.sleep(0.03)
 
                         except ClientError as e:
